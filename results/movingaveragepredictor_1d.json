@@ -1,0 +1,23 @@
+{
+  "predictor_name": "MovingAveragePredictor",
+  "predictor_params": {
+    "horizon": "1d",
+    "window": 500
+  },
+  "horizon": "1d",
+  "dataset": "high_fees_20171215_20171222",
+  "split": "test",
+  "evaluation_criterion": "0.05_percentile",
+  "inclusion_percentile": 0.05,
+  "metrics": {
+    "mae": 21.345470071603653,
+    "rmse": 33.85219586052347,
+    "directional_accuracy": 0.54,
+    "mean_prediction": 358.66710404704327,
+    "std_prediction": 29.48692178941168,
+    "inclusion_accuracy": 0.0,
+    "n_included": "0"
+  },
+  "n_snapshots": 50,
+  "timestamp": "2026-02-11T11:12:47.919892"
+}

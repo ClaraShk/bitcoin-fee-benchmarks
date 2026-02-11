@@ -1,0 +1,23 @@
+{
+  "predictor_name": "NaivePredictor",
+  "predictor_params": {
+    "horizon": "3h",
+    "method": "last_value"
+  },
+  "horizon": "3h",
+  "dataset": "high_fees_20171215_20171222",
+  "split": "test",
+  "evaluation_criterion": "0.05_percentile",
+  "inclusion_percentile": 0.05,
+  "metrics": {
+    "mae": 237.29441069278772,
+    "rmse": 279.7692183542061,
+    "directional_accuracy": 0.38,
+    "mean_prediction": 387.43999581574184,
+    "std_prediction": 279.57502907753735,
+    "inclusion_accuracy": 0.08,
+    "n_included": "4"
+  },
+  "n_snapshots": 50,
+  "timestamp": "2026-02-11T11:11:53.256076"
+}
