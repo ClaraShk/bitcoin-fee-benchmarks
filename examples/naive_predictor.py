@@ -11,7 +11,7 @@ Usage:
     >>> predicted_fee = predictor.predict(features)
 """
 
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -49,6 +49,7 @@ class NaivePredictor(BasePredictor):
     def predict(
         self,
         features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
     ) -> float:
         """
         Predict fee rate using the last observed value.
@@ -59,6 +60,7 @@ class NaivePredictor(BasePredictor):
         Args:
             features: DataFrame with mempool transaction features.
                 Must contain 'fee_rate' column.
+            context: Optional context dict (unused by this predictor)
 
         Returns:
             Last observed fee rate in sat/vbyte
@@ -95,12 +97,17 @@ class NaiveMaxPredictor(BasePredictor):
         """
         super().__init__(horizon=horizon, name='NaiveMaxPredictor')
 
-    def predict(self, features: pd.DataFrame) -> float:
+    def predict(
+        self,
+        features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> float:
         """
         Predict fee rate using the maximum observed value.
 
         Args:
             features: DataFrame with 'fee_rate' column
+            context: Optional context dict (unused by this predictor)
 
         Returns:
             Maximum fee rate in sat/vbyte

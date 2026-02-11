@@ -10,7 +10,7 @@ Usage:
     >>> predicted_fee = predictor.predict(features)
 """
 
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -73,6 +73,7 @@ class MedianFeePredictor(BasePredictor):
     def predict(
         self,
         features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
     ) -> float:
         """
         Predict fee rate using median of current mempool.
@@ -80,6 +81,8 @@ class MedianFeePredictor(BasePredictor):
         Args:
             features: DataFrame with mempool transaction features.
                 Must contain 'fee_rate' column.
+            context: Optional context dict with timestamp and block_data
+                for predictors that need historical information.
 
         Returns:
             Recommended fee rate in sat/vbyte
@@ -96,12 +99,16 @@ class MedianFeePredictor(BasePredictor):
         #   - num_of_inputs: Number of inputs
         #   - output_value: Total output values
         #
+        # If context is provided, you also have access to:
+        #   - context['timestamp']: Current snapshot timestamp
+        #   - context['block_data']: DataFrame of confirmed transactions
+        #
         # Your goal: predict the fee rate needed to confirm
         # within self.horizon ('3h' or '1d')
         #
         # Example approaches:
         #   - Return a percentile of current fee rates
-        #   - Use historical block data
+        #   - Use historical block data from context
         #   - Train an ML model
         #   - Use mempool size/congestion as a signal
         #

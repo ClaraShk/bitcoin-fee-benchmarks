@@ -90,6 +90,7 @@ class BasePredictor(ABC):
     def predict(
         self,
         features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
     ) -> Union[float, np.ndarray, pd.Series]:
         """
         Predict fee rate(s) for the given features.
@@ -106,6 +107,12 @@ class BasePredictor(ABC):
                 - fee: Transaction fees in satoshis
                 - num_of_inputs: Number of inputs per transaction
                 - output_value: Total output values
+            context: Optional dictionary with additional context for prediction.
+                When provided by the evaluation framework, contains:
+                - timestamp: Current snapshot timestamp (pd.Timestamp)
+                - block_data: DataFrame of confirmed transactions with
+                  block_height, block_timestamp, fee_rate columns.
+                Predictors that don't need context can ignore this parameter.
 
         Returns:
             Predicted fee rate(s) in sat/vbyte. Can be:

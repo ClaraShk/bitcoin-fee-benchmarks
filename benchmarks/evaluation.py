@@ -104,6 +104,7 @@ def evaluate_single_snapshot(
     features: pd.DataFrame,
     block_fee_rates: Optional[List[float]] = None,
     inclusion_percentile: float = DEFAULT_INCLUSION_PERCENTILE,
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Evaluate a predictor on a single snapshot.
@@ -113,11 +114,13 @@ def evaluate_single_snapshot(
         features: Snapshot features
         block_fee_rates: Fee rates from target block(s)
         inclusion_percentile: Percentile threshold for inclusion
+        context: Optional context dict with timestamp and block_data
+            for predictors that need historical information
 
     Returns:
         Dictionary with prediction and metrics
     """
-    prediction = predictor.predict(features)
+    prediction = predictor.predict(features, context=context)
 
     result = {
         'prediction': float(prediction) if np.isscalar(prediction) else prediction,
@@ -208,9 +211,22 @@ def evaluate_predictor(
             dataset, timestamp, predictor.horizon
         )
 
+        # Build context for predictors that need historical block data
+        context = None
+        if 'block_index' in dataset:
+            snapshot_ts = pd.Timestamp(timestamp)
+            # Handle timezone for context timestamp
+            block_timestamps = dataset['block_index']['block_timestamp']
+            if block_timestamps.dt.tz is not None and snapshot_ts.tz is None:
+                snapshot_ts = snapshot_ts.tz_localize('UTC')
+            context = {
+                'timestamp': snapshot_ts,
+                'block_data': dataset['block_index'],
+            }
+
         # Evaluate on this snapshot
         result = evaluate_single_snapshot(
-            predictor, features, block_fee_rates, inclusion_percentile
+            predictor, features, block_fee_rates, inclusion_percentile, context
         )
         result['timestamp'] = timestamp
         snapshot_results.append(result)
@@ -346,7 +362,19 @@ def time_series_cv(
             if len(features) == 0:
                 continue
 
-            pred = predictor.predict(features)
+            # Build context for predictors that need historical block data
+            context = None
+            if 'block_index' in dataset:
+                snapshot_ts = pd.Timestamp(ts)
+                block_timestamps = dataset['block_index']['block_timestamp']
+                if block_timestamps.dt.tz is not None and snapshot_ts.tz is None:
+                    snapshot_ts = snapshot_ts.tz_localize('UTC')
+                context = {
+                    'timestamp': snapshot_ts,
+                    'block_data': dataset['block_index'],
+                }
+
+            pred = predictor.predict(features, context=context)
             predictions.append(pred)
             actuals.append(features['fee_rate'].median())
 

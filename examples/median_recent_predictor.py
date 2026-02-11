@@ -66,6 +66,7 @@ class MedianRecentPredictor(BasePredictor):
     def predict(
         self,
         features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
     ) -> float:
         """
         Predict fee rate using median of recent transactions.
@@ -73,6 +74,7 @@ class MedianRecentPredictor(BasePredictor):
         Args:
             features: DataFrame with mempool transaction features.
                 Must contain 'fee_rate' column.
+            context: Optional context dict (unused by this predictor)
 
         Returns:
             Median fee rate in sat/vbyte
@@ -147,12 +149,14 @@ class PercentilePredictor(BasePredictor):
     def predict(
         self,
         features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
     ) -> float:
         """
         Predict fee rate using the specified percentile.
 
         Args:
             features: DataFrame with 'fee_rate' column
+            context: Optional context dict (unused by this predictor)
 
         Returns:
             Percentile fee rate in sat/vbyte

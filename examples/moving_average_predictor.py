@@ -66,6 +66,7 @@ class MovingAveragePredictor(BasePredictor):
     def predict(
         self,
         features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
     ) -> float:
         """
         Predict fee rate using moving average of recent transactions.
@@ -73,6 +74,7 @@ class MovingAveragePredictor(BasePredictor):
         Args:
             features: DataFrame with mempool transaction features.
                 Must contain 'fee_rate' column.
+            context: Optional context dict (unused by this predictor)
 
         Returns:
             Average fee rate over the window in sat/vbyte
@@ -140,12 +142,14 @@ class ExponentialMovingAveragePredictor(BasePredictor):
     def predict(
         self,
         features: pd.DataFrame,
+        context: Optional[Dict[str, Any]] = None,
     ) -> float:
         """
         Predict fee rate using exponential moving average.
 
         Args:
             features: DataFrame with 'fee_rate' column
+            context: Optional context dict (unused by this predictor)
 
         Returns:
             EMA of fee rates in sat/vbyte
