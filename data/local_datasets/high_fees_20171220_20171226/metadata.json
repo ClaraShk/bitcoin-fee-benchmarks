@@ -1,0 +1,21 @@
+{
+  "dataset_name": "high_fees_20171220_20171226",
+  "start_date": "2017-12-20T00:00:00",
+  "end_date": "2017-12-26T23:59:59",
+  "snapshot_interval_minutes": 10,
+  "window_minutes": 10,
+  "expected_snapshots": 1008,
+  "extraction_stats": {
+    "extracted": 1008,
+    "skipped": 0,
+    "failed": 0,
+    "empty": 0
+  },
+  "extraction_date": "2026-02-03T12:36:34.589705",
+  "validation": {
+    "date": "2026-02-03T13:28:36.434993",
+    "quality_score": 65.0,
+    "issues_count": 10,
+    "warnings_count": 0
+  }
+}
