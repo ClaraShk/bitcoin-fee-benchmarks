@@ -99,11 +99,55 @@ def get_block_fee_rates(
     return horizon_blocks['fee_rate'].dropna().tolist()
 
 
+def get_block_data_past(
+    dataset: Dict,
+    snapshot_time: str,
+    lookback_hours: float = 3.0,
+) -> Optional[pd.DataFrame]:
+    """
+    Get block data (block_height, block_timestamp, fee_rate) for blocks
+    in the past lookback window, for use as predictor context.
+
+    Args:
+        dataset: Dataset dictionary from load_dataset()
+        snapshot_time: Timestamp of the prediction snapshot
+        lookback_hours: Hours of block history (default 3.0)
+
+    Returns:
+        DataFrame with columns block_height, block_timestamp, fee_rate for
+        blocks in [snapshot_ts - lookback_hours, snapshot_ts), or None if
+        block_index is not available.
+    """
+    if 'block_index' not in dataset:
+        return None
+
+    block_index = dataset['block_index']
+    snapshot_ts = pd.Timestamp(snapshot_time)
+    start_ts = snapshot_ts - pd.Timedelta(hours=lookback_hours)
+
+    block_timestamps = block_index['block_timestamp']
+    if block_timestamps.dt.tz is not None:
+        snapshot_ts = snapshot_ts.tz_localize('UTC') if snapshot_ts.tz is None else snapshot_ts
+        start_ts = start_ts.tz_localize('UTC') if start_ts.tz is None else start_ts
+    elif hasattr(snapshot_ts, 'tz') and snapshot_ts.tz is not None:
+        start_ts = start_ts.tz_localize(None) if start_ts.tz is not None else start_ts
+
+    mask = (block_timestamps >= start_ts) & (block_timestamps < snapshot_ts)
+    past = block_index[mask]
+
+    required = ['block_height', 'block_timestamp', 'fee_rate']
+    if not all(c in past.columns for c in required):
+        return None
+
+    return past[required].copy()
+
+
 def evaluate_single_snapshot(
     predictor: BasePredictor,
     features: pd.DataFrame,
     block_fee_rates: Optional[List[float]] = None,
     inclusion_percentile: float = DEFAULT_INCLUSION_PERCENTILE,
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Evaluate a predictor on a single snapshot.
@@ -113,11 +157,18 @@ def evaluate_single_snapshot(
         features: Snapshot features
         block_fee_rates: Fee rates from target block(s)
         inclusion_percentile: Percentile threshold for inclusion
+        context: Optional context (timestamp, block_data) for predictors that need it
 
     Returns:
         Dictionary with prediction and metrics
     """
-    prediction = predictor.predict(features)
+    if context is not None:
+        try:
+            prediction = predictor.predict(features, context=context)
+        except TypeError:
+            prediction = predictor.predict(features)
+    else:
+        prediction = predictor.predict(features)
 
     result = {
         'prediction': float(prediction) if np.isscalar(prediction) else prediction,
@@ -208,9 +259,18 @@ def evaluate_predictor(
             dataset, timestamp, predictor.horizon
         )
 
+        # Build context for predictors that use block history (e.g. past 3h)
+        context = None
+        block_data_past = get_block_data_past(dataset, timestamp, lookback_hours=3.0)
+        if block_data_past is not None:
+            context = {
+                'timestamp': pd.Timestamp(timestamp),
+                'block_data': block_data_past,
+            }
+
         # Evaluate on this snapshot
         result = evaluate_single_snapshot(
-            predictor, features, block_fee_rates, inclusion_percentile
+            predictor, features, block_fee_rates, inclusion_percentile, context=context
         )
         result['timestamp'] = timestamp
         snapshot_results.append(result)
